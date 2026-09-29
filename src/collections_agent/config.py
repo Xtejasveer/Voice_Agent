@@ -31,13 +31,21 @@ class Settings(BaseSettings):
     livekit_api_key: str | None = None
     livekit_api_secret: str | None = None
 
-    # Providers (Phase 2)
-    deepgram_api_key: str | None = None
-    openai_api_key: str | None = None
-    cartesia_api_key: str | None = None
+    # LiveKit Inference model strings (Option A). All swappable via .env.
+    # LLM is the "brain"; changing it to e.g. "google/gemini-3.8-flash" is a
+    # one-line config change (PRD §4 swappable-LLM requirement).
+    llm_model: str = "openai/gpt-4o-mini"
+    stt_model: str = "deepgram/flux-general"
+    tts_model: str = "cartesia/sonic-3"
+    # Optional Cartesia voice id. None uses the model's default voice.
+    tts_voice: str | None = None
 
-    # LLM model id, swappable via config.
-    llm_model: str = "gpt-4o-mini"
+    # Agent name used by `python agent.py dev` and the Agent Console.
+    agent_name: str = "voice-agent"
+
+    # The organisation the agent calls on behalf of (agent's own branding,
+    # shown in the greeting disclosure). Not customer data.
+    company_name: str = "Meridian Finance"
 
     # Which seeded customer the demo call is about.
     customer_id: str = "CUST-001"

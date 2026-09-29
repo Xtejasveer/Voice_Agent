@@ -5,6 +5,7 @@ description = "Real-time voice AI agent for accounts-receivable collections call
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
+    "livekit-agents[silero,turn-detector]~=1.8",
     "pydantic-settings>=2.0",
 ]
 
