@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from dataclasses import dataclass
 from datetime import date
 from enum import Enum
 
@@ -53,3 +54,14 @@ class Invoice(BaseModel):
     issue_date: date
     due_date: date
     status: InvoiceStatus
+
+
+@dataclass
+class CallState:
+    """Mutable per-call state shared with the function tools."""
+
+    customer_id: str
+    call_id: str
+    started_at: str  # ISO timestamp
+    verified: bool = False
+    outcome_logged: bool = False

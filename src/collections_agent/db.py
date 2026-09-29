@@ -191,3 +191,100 @@ def count_rows(conn: sqlite3.Connection, table: str) -> int:
     if table not in allowed:
         raise ValueError(f"Unknown table: {table}")
     return conn.execute(f"SELECT COUNT(*) FROM {table}").fetchone()[0]
+
+
+# --- Writes used by the function tools -------------------------------------
+
+def set_invoice_status(
+    conn: sqlite3.Connection, invoice_id: str, status: InvoiceStatus
+) -> None:
+    conn.execute(
+        "UPDATE invoices SET status = ? WHERE id = ?",
+        (status.value, invoice_id),
+    )
+
+
+def insert_promise(
+    conn: sqlite3.Connection,
+    *,
+    invoice_id: str,
+    call_id: str,
+    promised_date: str,
+    amount_inr: int,
+    created_at: str,
+) -> int:
+    cur = conn.execute(
+        "INSERT INTO promises_to_pay "
+        "(invoice_id, call_id, promised_date, amount_inr, created_at) "
+        "VALUES (?, ?, ?, ?, ?)",
+        (invoice_id, call_id, promised_date, amount_inr, created_at),
+    )
+    return int(cur.lastrowid)
+
+
+def insert_dispute(
+    conn: sqlite3.Connection,
+    *,
+    invoice_id: str,
+    call_id: str,
+    dispute_type: str,
+    details: str,
+    created_at: str,
+) -> int:
+    cur = conn.execute(
+        "INSERT INTO disputes "
+        "(invoice_id, call_id, dispute_type, details, created_at) "
+        "VALUES (?, ?, ?, ?, ?)",
+        (invoice_id, call_id, dispute_type, details, created_at),
+    )
+    return int(cur.lastrowid)
+
+
+def insert_escalation(
+    conn: sqlite3.Connection,
+    *,
+    customer_id: str,
+    call_id: str,
+    reason: str,
+    preferred_callback_time: str | None,
+    created_at: str,
+) -> int:
+    cur = conn.execute(
+        "INSERT INTO escalations "
+        "(customer_id, call_id, reason, preferred_callback_time, created_at) "
+        "VALUES (?, ?, ?, ?, ?)",
+        (customer_id, call_id, reason, preferred_callback_time, created_at),
+    )
+    return int(cur.lastrowid)
+
+
+def upsert_call(
+    conn: sqlite3.Connection,
+    *,
+    call_id: str,
+    customer_id: str,
+    started_at: str,
+    ended_at: str,
+    outcome: str,
+    summary: str,
+    transcript_path: str,
+    avg_latency_ms: int | None = None,
+    p95_latency_ms: int | None = None,
+) -> None:
+    """Insert or replace the final call record (PRD §7 calls table)."""
+    conn.execute(
+        "INSERT INTO calls "
+        "(id, customer_id, started_at, ended_at, outcome, summary, "
+        " transcript_path, avg_latency_ms, p95_latency_ms) "
+        "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?) "
+        "ON CONFLICT(id) DO UPDATE SET "
+        " customer_id=excluded.customer_id, started_at=excluded.started_at, "
+        " ended_at=excluded.ended_at, outcome=excluded.outcome, "
+        " summary=excluded.summary, transcript_path=excluded.transcript_path, "
+        " avg_latency_ms=excluded.avg_latency_ms, "
+        " p95_latency_ms=excluded.p95_latency_ms",
+        (
+            call_id, customer_id, started_at, ended_at, outcome, summary,
+            transcript_path, avg_latency_ms, p95_latency_ms,
+        ),
+    )
